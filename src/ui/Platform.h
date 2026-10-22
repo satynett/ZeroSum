@@ -1,5 +1,7 @@
 #pragma once
-// Platform boundary: keep operating-system-specific code in this file.
+// All operating-system-specific socket declarations stay behind this header.
+#include <stdexcept>
+#include <string>
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -13,6 +15,8 @@ inline int closeSocket(socket_t s) { return closesocket(s); }
 struct NetRuntime {
     NetRuntime() { WSADATA d{}; if (WSAStartup(MAKEWORD(2,2), &d) != 0) throw std::runtime_error("WSAStartup failed"); }
     ~NetRuntime() { WSACleanup(); }
+    NetRuntime(const NetRuntime&) = delete;
+    NetRuntime& operator=(const NetRuntime&) = delete;
 };
 #else
 #include <sys/types.h>
@@ -27,5 +31,3 @@ constexpr socket_t invalid_socket = -1;
 inline int closeSocket(socket_t s) { return close(s); }
 struct NetRuntime {};
 #endif
-#include <stdexcept>
-#include <string>
