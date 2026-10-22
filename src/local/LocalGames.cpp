@@ -116,20 +116,30 @@ void runPokerLocal() {
             const int target=std::max(humanBet,botBet);
             const bool humanToAct=true; // Hot-seat local version always prompts the human first.
             if(humanToAct && humanStack>0) {
-                std::cout << "Pot " << pot << " | Your stack " << humanStack << " | To call " << std::max(0,target-humanBet) << "\n";
-                std::cout << "Action: ";
-                std::string line; if(!std::getline(std::cin,line)) return;
-                std::istringstream input(line);std::string action;input>>action;
-                if(action=="fold") {humanFolded=true;continue;}
-                if(action=="allin") putChips(humanStack,humanBet,humanStack);
-                else if(action=="raise") {
-                    int total=0;input>>total;
-                    const int call=std::max(0,target-humanBet);
-                    if(total<=target || total-humanBet>humanStack) {std::cout<<"Invalid raise; treating as call/check.\n";putChips(humanStack,humanBet,call);}
-                    else putChips(humanStack,humanBet,total-humanBet);
-                } else if(action=="call") putChips(humanStack,humanBet,std::max(0,target-humanBet));
-                else if(action=="check" && humanBet>=target) {}
-                else {std::cout<<"You must call or fold.\n";putChips(humanStack,humanBet,std::max(0,target-humanBet));}
+                const int toCall = std::max(0,target-humanBet);
+                const int maxTotalBet = humanBet + humanStack;
+                const bool canRaise = maxTotalBet >= target + 20;
+                std::cout << "\n╔══════════════════════════════════════╗\n"
+                          << "║              YOUR TURN               ║\n"
+                          << "╚══════════════════════════════════════╝\n"
+                          << "Pot: " << pot << " | Your chips: " << humanStack
+                          << " | To call: " << toCall << "\n";
+                std::cout << "  1. Fold\n"
+                          << "  2. " << (toCall == 0 ? "Check" : "Call (" + std::to_string(std::min(toCall,humanStack)) + ")") << "\n";
+                int optionCount = 2;
+                if(canRaise) {
+                    std::cout << "  3. Raise\n";
+                    optionCount = 3;
+                }
+                std::cout << "  " << optionCount+1 << ". All-in (" << humanStack << ")\n";
+                const int choice = readInt("Choose an option: ",1,optionCount+1);
+                if(choice==1) { humanFolded=true; continue; }
+                if(choice==2) putChips(humanStack,humanBet,toCall);
+                else if(canRaise && choice==3) {
+                    const int minRaise = target + 20;
+                    const int total = readInt("Raise to total bet (" + std::to_string(minRaise) + "-" + std::to_string(maxTotalBet) + "): ",minRaise,maxTotalBet);
+                    putChips(humanStack,humanBet,total-humanBet);
+                } else putChips(humanStack,humanBet,humanStack);
             }
             if(!humanFolded && botStack>0) {
                 const int currentTarget=std::max(humanBet,botBet);
