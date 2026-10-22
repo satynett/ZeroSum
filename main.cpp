@@ -1,15 +1,17 @@
+#include "src/local/LocalGames.h"
 #include <iostream>
 #include <string>
 int main() {
-    std::cout<<"C++17 Multiplayer Game Hub\n"
-             <<"1. Host (network server module pending)\n"
-             <<"2. Join (network client module pending)\n"
-             <<"3. Play local Math Game\n"
-             <<"4. Poker card/deck smoke test\n"
-             <<"Choice: ";
-    int choice=0; if(!(std::cin>>choice)) return 0;
-    if(choice==3) { std::cout<<"Run tools/math_local sprint|blitz|survival to play.\n"; }
-    else if(choice==4) { std::cout<<"Run tools/poker_local to test the deck.\n"; }
-    else std::cout<<"Network lobby is not implemented yet.\n";
-    return 0;
+    for (;;) {
+        std::cout<<"\n=== C++17 Terminal Game Hub ===\n"
+                 <<"1. Math Game vs bot\n"
+                 <<"2. Texas Hold'em vs bot\n"
+                 <<"0. Exit\nChoice: ";
+        std::string choice;
+        if(!std::getline(std::cin,choice)) return 0;
+        if(choice=="1") runMathLocal();
+        else if(choice=="2") runPokerLocal();
+        else if(choice=="0" || choice=="q") return 0;
+        else std::cout<<"Choose 1, 2, or 0.\n";
+    }
 }
