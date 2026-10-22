@@ -76,7 +76,6 @@ void runMathLocal() {
         const int botAnswer=botMathAnswer(q, mode==1?75:mode==2?80:70);
         if(botAnswer==q.answer) { ++botScore; std::cout << "MathBot solved it. +1 point for bot.\n"; }
         else std::cout << "MathBot got it wrong.\n";
-        if(mode==3 && streak%3==0 && streak>0) difficulty=std::min(5,difficulty+1);
     }
     std::cout << "\n=== FINAL SCORE ===\nYou: " << humanScore << "\nMathBot: " << botScore << "\n";
     if(humanScore>botScore) std::cout << "You win!\n";
