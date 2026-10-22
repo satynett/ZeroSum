@@ -7,7 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(gamehub_core
   src/net/Protocol.cpp src/net/Socket.cpp src/net/InviteCode.cpp
   src/math/QuestionGenerator.cpp src/math/MathGame.cpp src/math/MathBot.cpp
-  src/poker/Card.cpp src/poker/Deck.cpp src/poker/HandEvaluator.cpp
+  src/poker/Card.cpp src/poker/Deck.cpp src/poker/HandEvaluator.cpp src/poker/PokerBot.cpp
 )
 target_include_directories(gamehub_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(WIN32)
