@@ -134,11 +134,16 @@ void runPokerLocal() {
             if(!humanFolded && botStack>0) {
                 const int currentTarget=std::max(humanBet,botBet);
                 const int toCall=std::max(0,currentTarget-botBet);
-                std::vector<Card> visible=botHole;visible.insert(visible.end(),community.begin(),community.end());
                 int strength=0;
-                if(visible.size()>=5) {
-                    while(visible.size()<7) visible.push_back({Suit::Clubs,static_cast<int>(2+visible.size())});
+                if(community.size()==5) {
+                    std::vector<Card> visible=botHole;
+                    visible.insert(visible.end(),community.begin(),community.end());
                     strength=static_cast<int>(HandEvaluator::evaluate(visible).category);
+                } else {
+                    // Before the river, use a lightweight hole-card heuristic.
+                    const bool pocketPair=botHole[0].rank==botHole[1].rank;
+                    const bool highCard=botHole[0].rank>=11 || botHole[1].rank>=11;
+                    strength=(pocketPair?2:(highCard?1:0));
                 }
                 std::uniform_int_distribution<int> roll(1,100);
                 if(toCall>botStack) putChips(botStack,botBet,botStack);
