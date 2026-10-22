@@ -36,24 +36,21 @@ int readPokerChoiceTimed(int low, int high, int seconds) {
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
     std::string line;
     for (;;) {
-        const auto now = std::chrono::steady_clock::now();
-        if (now >= deadline) {
-            std::cout << "\\n\\033[1;31mTIME'S UP! Checking/calling.\\033[0m\\n";
+        if (std::chrono::steady_clock::now() >= deadline) {
+            std::cout << "\\nTime expired. Checking/calling.\\n";
             return std::min(2, high);
         }
-        const int left = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(deadline-now).count()) + 1;
-        std::cout << "\\r\\033[1;33mYOUR MOVE  " << left << "s  |  Choice: \\033[0m" << std::flush;
         fd_set input;
         FD_ZERO(&input);
         FD_SET(STDIN_FILENO, &input);
         timeval wait{1, 0};
-        const int ready = select(STDIN_FILENO+1, &input, nullptr, nullptr, &wait);
+        const int ready = select(STDIN_FILENO + 1, &input, nullptr, nullptr, &wait);
         if (ready > 0) {
-            std::getline(std::cin, line);
+            if (!std::getline(std::cin, line)) return std::min(2, high);
             std::istringstream in(line);
             int choice; char extra;
             if (in >> choice && !(in >> extra) && choice >= low && choice <= high) return choice;
-            std::cout << "\\nChoose " << low << "-" << high << ".\\n";
+            std::cout << "Choose " << low << "-" << high << ".\\n";
         } else if (ready < 0) {
             return std::min(2, high);
         }
@@ -192,7 +189,7 @@ void runPokerLocal() {
                 }
                 const int allInOption = nextOption;
                 std::cout << "  " << allInOption << ". All-in (" << humanStack << ")\n";
-                const int choice = readPokerChoiceTimed(1,allInOption,20);
+                const int choice = readPokerChoiceTimed(1,allInOption,30);
                 if(choice==1) { humanFolded=true; continue; }
                 if(choice==2) putChips(humanStack,humanBet,toCall);
                 else if(choice>=3 && choice<allInOption) {
@@ -201,6 +198,8 @@ void runPokerLocal() {
                 } else putChips(humanStack,humanBet,humanStack);
             }
             if(!humanFolded && botStack>0) {
+                std::uniform_int_distribution<int> thinkingTime(700, 1900);
+                std::this_thread::sleep_for(std::chrono::milliseconds(thinkingTime(randomEngine())));
                 const int currentTarget=std::max(humanBet,botBet);
                 const int toCall=std::max(0,currentTarget-botBet);
                 int strength=0;
