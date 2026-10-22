@@ -253,7 +253,7 @@ void runPokerLocal() {
                 } else putChips(humanStack,humanBet,humanStack);
             }
             if(!humanFolded && botStack>0) {
-                std::uniform_int_distribution<int> thinkingTime(700, 1900);
+                std::uniform_int_distribution<int> thinkingTime(1200, 5000);
                 std::this_thread::sleep_for(std::chrono::milliseconds(thinkingTime(randomEngine())));
                 const int currentTarget=std::max(humanBet,botBet);
                 const int toCall=std::max(0,currentTarget-botBet);
