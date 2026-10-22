@@ -38,6 +38,39 @@ std::string shortCard(Card c) {
 void showCards(const std::vector<Card>& cards) {
     for (auto c:cards) std::cout << shortCard(c) << ' ';
 }
+
+void renderPokerTable(int handNumber, const std::string& opponentMove,
+                      const std::vector<Card>& community, const std::vector<Card>& humanHole,
+                      int pot, int humanStack, int botStack, int toCall) {
+    std::cout << "\033[2J\033[H";
+    std::cout << "\033[1;32m";
+    std::cout << "╭────────────────────────────────────────────────────╮\n"
+              << "│                 ♠  TEXAS HOLD'EM  ♥                │\n"
+              << "╰────────────────────────────────────────────────────╯\033[0m\n";
+    std::cout << "HAND " << handNumber << "                         🤖 PokerBot: " << opponentMove << "\n\n";
+    std::cout << "                 OPPONENT  ·  $" << botStack << "\n";
+    std::cout << "                 [ 🂠 ] [ 🂠 ]\n\n";
+    std::cout << "          ";
+    if (community.empty()) std::cout << "[  ·  ] [  ·  ] [  ·  ] [  ·  ] [  ·  ]";
+    else {
+        showCards(community);
+        for (std::size_t i=community.size(); i<5; ++i) std::cout << "[  ·  ] ";
+    }
+    std::cout << "\n\n";
+    std::cout << "                    ┌──────────┐\n"
+              << "                    │  POT $" << pot;
+    if (pot < 100) std::cout << "   ";
+    else if (pot < 1000) std::cout << "  ";
+    else std::cout << " ";
+    std::cout << "│\n                    └──────────┘\n\n";
+    std::cout << "                      YOU  ·  $" << humanStack << "\n";
+    std::cout << "                 ";
+    showCards(humanHole);
+    std::cout << "\n\n";
+    std::cout << "\033[1;33m";
+    std::cout << "  1  FOLD       2  " << (toCall == 0 ? "CHECK" : "CALL $" + std::to_string(std::min(toCall,humanStack))) << "\n";
+    std::cout << "\033[0m";
+}
 int botMathAnswer(const Question& q, int probability) {
     std::uniform_int_distribution<int> roll(1,100);
     if (roll(randomEngine()) <= probability) return q.answer;
@@ -87,9 +120,7 @@ void runMathLocal() {
 }
 
 void runPokerLocal() {
-    std::cout << "\n=== TEXAS HOLD'EM: You vs PokerBot ===\n"
-              << "One-on-one heads-up. Blinds 10/20. Starting stacks 1000.\n"
-              << "Actions: fold, check, call, raise <total bet>, allin.\n";
+    std::cout << "\nStarting Texas Hold'em...\n";
     int humanStack=1000, botStack=1000;
     int handNumber=0;
     while(humanStack>0 && botStack>0) {
@@ -106,9 +137,7 @@ void runPokerLocal() {
         if(humanButton) {putChips(humanStack,humanBet,10);putChips(botStack,botBet,20);}
         else {putChips(botStack,botBet,10);putChips(humanStack,humanBet,20);}
         bool humanFolded=false, botFolded=false;
-        std::cout << "\n--- Hand " << handNumber << " ---\n";
-        std::cout << "Your cards: "; showCards(humanHole);
-        std::cout << "\nYour stack: " << humanStack << " | Bot stack: " << botStack << " | Pot: " << pot << "\n";
+        std::string opponentMove = "posts blind";
         for(int street=0;street<4 && !humanFolded && !botFolded;++street) {
             if(street>0) { humanBet=0; botBet=0; }
             if(street==1 || street==2 || street==3) {
@@ -124,11 +153,7 @@ void runPokerLocal() {
                 std::vector<int> raiseTotals;
                 if(maxTotalBet >= target + 20) raiseTotals.push_back(target + 20);
                 if(maxTotalBet >= target + 40) raiseTotals.push_back(target + 40);
-                std::cout << "\n╔══════════════════════════════════════╗\n"
-                          << "║              YOUR TURN               ║\n"
-                          << "╚══════════════════════════════════════╝\n"
-                          << "Pot: " << pot << " | Your chips: " << humanStack
-                          << " | To call: " << toCall << "\n";
+                renderPokerTable(handNumber, opponentMove, community, humanHole, pot, humanStack, botStack, toCall);
                 std::cout << "  1. Fold\n"
                           << "  2. " << (toCall == 0 ? "Check" : "Call (" + std::to_string(std::min(toCall,humanStack)) + ")") << "\n";
                 int nextOption = 3;
@@ -161,10 +186,10 @@ void runPokerLocal() {
                 }
                 std::uniform_int_distribution<int> roll(1,100);
                 if(toCall>botStack) putChips(botStack,botBet,botStack);
-                else if(toCall>0 && strength<2 && roll(randomEngine())>15) {botFolded=true;std::cout<<"PokerBot folds.\n";}
+                else if(toCall>0 && strength<2 && roll(randomEngine())>15) {botFolded=true;opponentMove="folds";std::cout<<"\nPokerBot folds.\n";}
                 else if(street>0 && strength>=3 && botStack>toCall+20 && roll(randomEngine())<35) {
-                    putChips(botStack,botBet,std::min(botStack,toCall+40));std::cout<<"PokerBot raises.\n";
-                } else {putChips(botStack,botBet,toCall);std::cout<<"PokerBot checks/calls.\n";}
+                    putChips(botStack,botBet,std::min(botStack,toCall+40));opponentMove="raises";std::cout<<"\nPokerBot raises.\n";
+                } else {putChips(botStack,botBet,toCall);opponentMove=(toCall==0?"checks":"calls");std::cout<<"\nPokerBot "<<opponentMove<<".\n";}
             }
             // A single betting exchange per street keeps this lab version intentionally simple.
             if(humanStack==0 || botStack==0) break;
