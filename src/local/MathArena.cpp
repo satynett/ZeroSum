@@ -1,6 +1,7 @@
 #include "math/QuestionGenerator.h"
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <random>
