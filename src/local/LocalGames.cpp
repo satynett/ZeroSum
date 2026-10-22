@@ -28,9 +28,12 @@ int readInt(const std::string& prompt, int low, int high) {
     }
 }
 std::string shortCard(Card c) {
-    static const char* ranks[]={"?","?","2","3","4","5","6","7","8","9","T","J","Q","K","A"};
-    static const char suits[]={'c','d','h','s'};
-    return std::string(ranks[c.rank])+suits[static_cast<int>(c.suit)];
+    static const char* ranks[]={"?","?","2","3","4","5","6","7","8","9","10","J","Q","K","A"};
+    static const char* suits[]={"♣","♦","♥","♠"};
+    const std::string rank = (c.rank >= 2 && c.rank <= 14) ? ranks[c.rank] : "?";
+    const std::string suit = suits[static_cast<int>(c.suit)];
+    const bool red = c.suit == Suit::Diamonds || c.suit == Suit::Hearts;
+    return std::string(red ? "\033[31m" : "\033[37m") + "[ " + rank + " " + suit + " ]\033[0m";
 }
 void showCards(const std::vector<Card>& cards) {
     for (auto c:cards) std::cout << shortCard(c) << ' ';
