@@ -37,7 +37,7 @@ int readPokerChoiceTimed(int low, int high, int seconds) {
     std::string line;
     for (;;) {
         if (std::chrono::steady_clock::now() >= deadline) {
-            std::cout << "\\nTime expired. Checking/calling.\\n";
+            std::cout << "\nTime expired. Checking/calling.\n";
             return std::min(2, high);
         }
         fd_set input;
@@ -50,7 +50,7 @@ int readPokerChoiceTimed(int low, int high, int seconds) {
             std::istringstream in(line);
             int choice; char extra;
             if (in >> choice && !(in >> extra) && choice >= low && choice <= high) return choice;
-            std::cout << "Choose " << low << "-" << high << ".\\n";
+            std::cout << "Choose " << low << "-" << high << ".\n";
         } else if (ready < 0) {
             return std::min(2, high);
         }
@@ -290,7 +290,7 @@ void runPokerLocal() {
                     botFolded=true;
                     opponentMove="folds";
                 }
-                std::cout << "\\nPokerBot " << opponentMove << ".\\n";
+                std::cout << "\nPokerBot " << opponentMove << ".\n";
             }
             // A single betting exchange per street keeps this lab version intentionally simple.
             if(humanStack==0 || botStack==0) break;
