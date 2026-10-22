@@ -118,7 +118,9 @@ void runPokerLocal() {
             if(humanToAct && humanStack>0) {
                 const int toCall = std::max(0,target-humanBet);
                 const int maxTotalBet = humanBet + humanStack;
-                const bool canRaise = maxTotalBet >= target + 20;
+                std::vector<int> raiseTotals;
+                if(maxTotalBet >= target + 20) raiseTotals.push_back(target + 20);
+                if(maxTotalBet >= target + 40) raiseTotals.push_back(target + 40);
                 std::cout << "\n╔══════════════════════════════════════╗\n"
                           << "║              YOUR TURN               ║\n"
                           << "╚══════════════════════════════════════╝\n"
@@ -126,18 +128,17 @@ void runPokerLocal() {
                           << " | To call: " << toCall << "\n";
                 std::cout << "  1. Fold\n"
                           << "  2. " << (toCall == 0 ? "Check" : "Call (" + std::to_string(std::min(toCall,humanStack)) + ")") << "\n";
-                int optionCount = 2;
-                if(canRaise) {
-                    std::cout << "  3. Raise\n";
-                    optionCount = 3;
+                int nextOption = 3;
+                for(int total : raiseTotals) {
+                    std::cout << "  " << nextOption++ << ". Raise to " << total << "\n";
                 }
-                std::cout << "  " << optionCount+1 << ". All-in (" << humanStack << ")\n";
-                const int choice = readInt("Choose an option: ",1,optionCount+1);
+                const int allInOption = nextOption;
+                std::cout << "  " << allInOption << ". All-in (" << humanStack << ")\n";
+                const int choice = readInt("Choose an option: ",1,allInOption);
                 if(choice==1) { humanFolded=true; continue; }
                 if(choice==2) putChips(humanStack,humanBet,toCall);
-                else if(canRaise && choice==3) {
-                    const int minRaise = target + 20;
-                    const int total = readInt("Raise to total bet (" + std::to_string(minRaise) + "-" + std::to_string(maxTotalBet) + "): ",minRaise,maxTotalBet);
+                else if(choice>=3 && choice<allInOption) {
+                    const int total = raiseTotals[static_cast<std::size_t>(choice-3)];
                     putChips(humanStack,humanBet,total-humanBet);
                 } else putChips(humanStack,humanBet,humanStack);
             }
