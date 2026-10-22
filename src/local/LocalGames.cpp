@@ -154,8 +154,6 @@ void runPokerLocal() {
                 if(maxTotalBet >= target + 20) raiseTotals.push_back(target + 20);
                 if(maxTotalBet >= target + 40) raiseTotals.push_back(target + 40);
                 renderPokerTable(handNumber, opponentMove, community, humanHole, pot, humanStack, botStack, toCall);
-                std::cout << "  1. Fold\n"
-                          << "  2. " << (toCall == 0 ? "Check" : "Call (" + std::to_string(std::min(toCall,humanStack)) + ")") << "\n";
                 int nextOption = 3;
                 for(int total : raiseTotals) {
                     std::cout << "  " << nextOption++ << ". Raise to " << total << "\n";
