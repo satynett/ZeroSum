@@ -108,13 +108,14 @@ void runPokerLocal() {
         std::cout << "Your cards: "; showCards(humanHole);
         std::cout << "\nYour stack: " << humanStack << " | Bot stack: " << botStack << " | Pot: " << pot << "\n";
         for(int street=0;street<4 && !humanFolded && !botFolded;++street) {
+            if(street>0) { humanBet=0; botBet=0; }
             if(street==1 || street==2 || street==3) {
                 if(street==1) {community.push_back(deck.deal());community.push_back(deck.deal());community.push_back(deck.deal());}
                 else community.push_back(deck.deal());
                 std::cout << (street==1?"Flop: ":street==2?"Turn: ":"River: ");showCards(community);std::cout<<"\n";
             }
             const int target=std::max(humanBet,botBet);
-            const bool humanToAct=(street==0 ? humanButton : !humanButton);
+            const bool humanToAct=true; // Hot-seat local version always prompts the human first.
             if(humanToAct && humanStack>0) {
                 std::cout << "Pot " << pot << " | Your stack " << humanStack << " | To call " << std::max(0,target-humanBet) << "\n";
                 std::cout << "Action: ";
