@@ -4,7 +4,7 @@
 int main() {
     for (;;) {
         std::cout<<"\n=== C++17 Terminal Game Hub ===\n"
-                 <<"1. Math Game vs bot\n"
+                 <<"1. Matiks vs MathBot\n"
                  <<"2. Texas Hold'em vs bot\n"
                  <<"0. Exit\nChoice: ";
         std::string choice;
