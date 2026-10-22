@@ -68,6 +68,61 @@ void showCards(const std::vector<Card>& cards) {
     for (auto c:cards) std::cout << shortCard(c) << ' ';
 }
 
+double estimateEquity(const std::vector<Card>& hole, const std::vector<Card>& board, int trials = 250) {
+    if (board.size() == 5) {
+        std::vector<Card> known = hole;
+        known.insert(known.end(), board.begin(), board.end());
+        std::vector<Card> deck;
+        for (int s=0; s<4; ++s) for (int r=2; r<=14; ++r) {
+            Card card{static_cast<Suit>(s), r};
+            if (std::find(known.begin(), known.end(), card) == known.end()) deck.push_back(card);
+        }
+        std::shuffle(deck.begin(), deck.end(), randomEngine());
+        int wins=0, ties=0;
+        for (int i=0; i<trials && deck.size()>=2; ++i) {
+            std::vector<Card> mine=known, theirs{deck[i%deck.size()],deck[(i+1)%deck.size()]};
+            theirs.insert(theirs.end(), board.begin(), board.end());
+            const auto myRank=HandEvaluator::evaluate(mine);
+            const auto theirRank=HandEvaluator::evaluate(theirs);
+            if (theirRank < myRank) ++wins;
+            else if (theirRank == myRank) ++ties;
+        }
+        return (wins + ties*0.5) / std::max(1,trials);
+    }
+    int wins=0, ties=0;
+    std::vector<Card> known=hole;
+    known.insert(known.end(),board.begin(),board.end());
+    std::vector<Card> remaining;
+    for(int s=0;s<4;++s) for(int r=2;r<=14;++r) {
+        Card card{static_cast<Suit>(s),r};
+        if(std::find(known.begin(),known.end(),card)==known.end()) remaining.push_back(card);
+    }
+    for(int t=0;t<trials;++t) {
+        std::shuffle(remaining.begin(),remaining.end(),randomEngine());
+        if(remaining.size()<7-board.size()) break;
+        std::vector<Card> myHole=hole, theirHole{remaining[0],remaining[1]};
+        std::vector<Card> runout=board;
+        std::size_t idx=2;
+        while(runout.size()<5) runout.push_back(remaining[idx++]);
+        std::vector<Card> mine=myHole, theirs=theirHole;
+        mine.insert(mine.end(),runout.begin(),runout.end());
+        theirs.insert(theirs.end(),runout.begin(),runout.end());
+        const auto myRank=HandEvaluator::evaluate(mine);
+        const auto theirRank=HandEvaluator::evaluate(theirs);
+        if(theirRank<myRank) ++wins;
+        else if(theirRank==myRank) ++ties;
+    }
+    return (wins + ties*0.5) / std::max(1,trials);
+}
+int preflopTier(const std::vector<Card>& hole) {
+    const int a=std::max(hole[0].rank,hole[1].rank), b=std::min(hole[0].rank,hole[1].rank);
+    const bool pair=a==b, suited=hole[0].suit==hole[1].suit, connected=a-b<=2;
+    if(pair && a>=10) return 1;
+    if((a==14 && b>=10) || (pair && a>=7) || (a==14 && b>=2 && suited)) return 2;
+    if(pair || (suited && connected) || (a>=11 && b>=9)) return 3;
+    return 4;
+}
+
 void renderPokerTable(int handNumber, const std::string& opponentMove,
                       const std::vector<Card>& community, const std::vector<Card>& humanHole,
                       int pot, int humanStack, int botStack, int toCall) {
@@ -202,23 +257,40 @@ void runPokerLocal() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(thinkingTime(randomEngine())));
                 const int currentTarget=std::max(humanBet,botBet);
                 const int toCall=std::max(0,currentTarget-botBet);
-                int strength=0;
-                if(community.size()==5) {
-                    std::vector<Card> visible=botHole;
-                    visible.insert(visible.end(),community.begin(),community.end());
-                    strength=static_cast<int>(HandEvaluator::evaluate(visible).category);
+                const double equity = community.empty()
+                    ? (preflopTier(botHole)==1 ? 0.72 : preflopTier(botHole)==2 ? 0.62 : preflopTier(botHole)==3 ? 0.50 : 0.38)
+                    : estimateEquity(botHole, community, 220);
+                const double potOdds = toCall == 0 ? 0.0 :
+                    static_cast<double>(toCall) / std::max(1, pot + toCall);
+                std::uniform_real_distribution<double> bluffRoll(0.0,1.0);
+                const bool canBluff = community.size() >= 3 && equity < 0.45 &&
+                    bluffRoll(randomEngine()) < (community.size()==3 ? 0.16 : 0.09);
+                if(toCall > botStack) {
+                    putChips(botStack,botBet,botStack);
+                    opponentMove="calls all-in";
+                } else if(canBluff && botStack > toCall + 40) {
+                    putChips(botStack,botBet,std::min(botStack,toCall+40));
+                    opponentMove="bluffs / raises";
+                } else if(equity >= potOdds + 0.18 && botStack > toCall + 40 &&
+                          std::uniform_int_distribution<int>(1,100)(randomEngine()) <= 45) {
+                    putChips(botStack,botBet,std::min(botStack,toCall+40));
+                    opponentMove="raises for value";
+                } else if(toCall == 0) {
+                    if(equity >= 0.58 && botStack >= 40 &&
+                       std::uniform_int_distribution<int>(1,100)(randomEngine()) <= 30) {
+                        putChips(botStack,botBet,40);
+                        opponentMove="bets";
+                    } else {
+                        opponentMove="checks";
+                    }
+                } else if(equity >= potOdds + 0.02) {
+                    putChips(botStack,botBet,toCall);
+                    opponentMove="calls";
                 } else {
-                    // Before the river, use a lightweight hole-card heuristic.
-                    const bool pocketPair=botHole[0].rank==botHole[1].rank;
-                    const bool highCard=botHole[0].rank>=11 || botHole[1].rank>=11;
-                    strength=(pocketPair?2:(highCard?1:0));
+                    botFolded=true;
+                    opponentMove="folds";
                 }
-                std::uniform_int_distribution<int> roll(1,100);
-                if(toCall>botStack) putChips(botStack,botBet,botStack);
-                else if(toCall>0 && strength<2 && roll(randomEngine())>15) {botFolded=true;opponentMove="folds";std::cout<<"\nPokerBot folds.\n";}
-                else if(street>0 && strength>=3 && botStack>toCall+20 && roll(randomEngine())<35) {
-                    putChips(botStack,botBet,std::min(botStack,toCall+40));opponentMove="raises";std::cout<<"\nPokerBot raises.\n";
-                } else {putChips(botStack,botBet,toCall);opponentMove=(toCall==0?"checks":"calls");std::cout<<"\nPokerBot "<<opponentMove<<".\n";}
+                std::cout << "\\nPokerBot " << opponentMove << ".\\n";
             }
             // A single betting exchange per street keeps this lab version intentionally simple.
             if(humanStack==0 || botStack==0) break;
