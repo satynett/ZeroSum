@@ -1,18 +1,22 @@
-# Architecture and contracts
+# Architecture
 
-## Module boundaries
-- `Game` receives parsed `Message` values and returns `Outbox` values. It never owns sockets or network threads.
-- `Protocol` maps one newline-delimited wire message to/from `Message`.
-- The server is responsible for client IDs, delivery, lobby state, and calling `Game::update()`.
-- Local runners call the same game interface directly, so game rules can be tested without TCP.
+The project is a local terminal game hub. All gameplay runs in the same process; no server, client, room code, or remote connection is needed.
 
-## Wire format
-Messages are `TYPE|field1|field2\n`. Lines over 1 KiB and unknown message types are rejected. Fields must not contain a raw newline.
+## Main files
 
-## Suggested team split
-1. Math module and generator tests.
-2. Poker evaluator and game rules tests.
-3. TCP/lobby, invite-code helpers, and cross-platform testing.
+- `main.cpp` starts the game hub.
+- `src/ui/UI.cpp` contains the main menu, shared input helpers, and terminal rendering.
+- `src/Matiks.cpp` contains Matiks gameplay, scoring, timed modes, and MathBot decisions.
+- `src/Poker.cpp` contains Texas Hold'em gameplay, betting, showdown, and PokerBot decisions.
+- `src/math/QuestionGenerator.cpp` generates math questions.
+- `src/poker/` contains card, deck, and hand-evaluation helpers.
 
-## Build checks
-Run configure, build, and CTest on macOS Clang and Windows MSVC or MinGW. Test networking on one shared Wi-Fi/hotspot; permit TCP port 5555 through Windows Firewall on private networks only.
+## Build and test
+
+Configure and build with CMake, then run the local test suite:
+
+```sh
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
