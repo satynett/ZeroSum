@@ -13,6 +13,7 @@
 #include <sys/select.h>
 #include <unistd.h>
 
+// Helper functions used by Matiks to generate bot answers and measure time.
 namespace {
 using Clock = std::chrono::steady_clock;
 
@@ -36,6 +37,7 @@ int botAnswer(const Question& q, int accuracy) {
 
 }
 
+// Run the full Matiks match from the mode menu to the final score.
 void runMathArenaLocal() {
     std::cout << "\n          M A T H I K S\n"
               << "      Quick maths. Beat the bot.\n\n"
@@ -53,6 +55,7 @@ void runMathArenaLocal() {
     const auto blitzEnd = Clock::now() + std::chrono::minutes(2);
     bool quit = false;
 
+    // Each loop is one question and one chance for the bot to score.
     while (!quit) {
         if (mode == 1 && (humanScore >= 10 || botScore >= 10)) break;
         if (mode == 2 && Clock::now() >= blitzEnd) break;
