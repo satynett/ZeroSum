@@ -1,5 +1,7 @@
 #include "Card.h"
 #include <string>
+
+using namespace std;
 std::ostream& operator<<(std::ostream& out,const Card& c) {
     static const char* ranks="??23456789TJQKA";
     static const char* suits[]={"♣","♦","♥","♠"};
