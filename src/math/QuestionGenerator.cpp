@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
+
+using namespace std;
 QuestionGenerator::QuestionGenerator() : rng_(static_cast<unsigned>(
     std::chrono::steady_clock::now().time_since_epoch().count())) {}
 Question QuestionGenerator::generate(int difficulty) {
