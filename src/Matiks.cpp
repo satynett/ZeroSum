@@ -1,3 +1,4 @@
+// OOP note: QuestionGenerator is used as an object through its public generate() method; its random engine is encapsulated inside the class. The match loop here is procedural, not an inheritance/polymorphism example.
 // Matiks.cpp: questions, difficulty, scoring, and MathBot turns.
 #include "math/QuestionGenerator.h"
 #include "ui/UI.h"
@@ -52,6 +53,7 @@ void runMathArenaLocal() {
     const int botLevel = readMenuChoice("Choose bot (1-3): ", 1, 3);
     const int accuracy = botLevel == 1 ? 60 : botLevel == 2 ? 80 : 95;
 
+    // Object creation: use the generator's public interface to get each question.
     QuestionGenerator generator;
     int humanScore = 0, botScore = 0, lives = 3, streak = 0, difficulty = 1, round = 0;
     const auto blitzEnd = Clock::now() + std::chrono::minutes(2);
