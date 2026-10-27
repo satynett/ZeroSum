@@ -1,3 +1,4 @@
+// OOP note: Deck and HandEvaluator provide reusable class interfaces for card dealing and hand ranking. The game coordinates these objects/operations; this file does not use an inheritance hierarchy or runtime polymorphism.
 // Poker.cpp: Texas Hold'em dealing, betting, showdown, and bot decisions.
 #include "ui/UI.h"
 
@@ -94,6 +95,7 @@ void runPokerLocal() {
     int handNumber=0;
     while(humanStack>0 && botStack>0) {
         ++handNumber;
+        // Deck encapsulates the shuffled card list and its deal position.
         Deck deck; deck.shuffle();
         std::vector<Card> humanHole{deck.deal(),deck.deal()};
         std::vector<Card> botHole{deck.deal(),deck.deal()};
@@ -142,7 +144,8 @@ void runPokerLocal() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(thinkingTime(randomEngine())));
                 const int currentTarget=std::max(humanBet,botBet);
                 const int toCall=std::max(0,currentTarget-botBet);
-                const double equity = community.empty()
+                // HandEvaluator abstracts the hand-ranking logic used in equity estimation.
+            const double equity = community.empty()
                     ? (preflopTier(botHole)==1 ? 0.72 : preflopTier(botHole)==2 ? 0.62 : preflopTier(botHole)==3 ? 0.50 : 0.38)
                     : estimateEquity(botHole, community, 220);
                 const double potOdds = toCall == 0 ? 0.0 :
