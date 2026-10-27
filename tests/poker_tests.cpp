@@ -1,3 +1,4 @@
+// Abstraction in tests: provide Card values to HandEvaluator and check returned HandRank ordering without depending on its internal algorithm.
 #include "poker/HandEvaluator.h"
 #include <cassert>
 #include <vector>
