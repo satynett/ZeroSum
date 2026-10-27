@@ -1,6 +1,6 @@
 # C++17 Terminal Game Hub
 
-A cross-platform C++17 terminal project for an OOP lab. It uses CMake and the C++ standard library. **The current playable focus is local Math and Texas Hold'em versus bots; networking is not required for this milestone.**
+A C++17 terminal project for an OOP lab. It contains two local games: Matiks against MathBot and Texas Hold'em against PokerBot.
 
 ## Build
 
@@ -11,15 +11,15 @@ cmake --build build
 
 ## Play
 
-Launch the menu:
+Launch the game menu:
 
 ```sh
 ./build/cpp_game_hub
 ```
 
-Choose **1** for Math Game vs MathBot or **2** for Texas Hold'em vs PokerBot.
+Choose **1** for Matiks vs MathBot or **2** for Texas Hold'em vs PokerBot.
 
-Standalone runners are also built:
+You can also launch either game directly:
 
 ```sh
 ./build/math_local
@@ -36,6 +36,5 @@ ctest --test-dir build --output-on-failure
 
 ## Current limitations
 
-- Math is a local human-versus-bot terminal mode; the timed modes are simplified for local play.
-- Poker is a simplified heads-up Texas Hold'em implementation for local play. It has blinds, hole cards, community cards, hand comparison, and a basic bot, but betting rounds are intentionally simplified.
-- LAN server/client/lobby networking is not part of this playable milestone.
+- Matiks is a local human-versus-bot terminal game with Sprint, Blitz, and Survival modes.
+- Poker is a simplified heads-up Texas Hold'em game against a bot. It includes blinds, hole cards, community cards, hand comparison, and simplified betting rounds.
