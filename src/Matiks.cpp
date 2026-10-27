@@ -14,6 +14,8 @@
 #include <unistd.h>
 
 // Helper functions used by Matiks to generate bot answers and measure time.
+
+using namespace std;
 namespace {
 using Clock = std::chrono::steady_clock;
 
