@@ -1,3 +1,4 @@
+// Encapsulation: QuestionGenerator owns its random engine (rng_) and exposes question creation through generate(), hiding implementation details from callers.
 #include "QuestionGenerator.h"
 #include <algorithm>
 #include <chrono>
@@ -6,6 +7,7 @@
 using namespace std;
 QuestionGenerator::QuestionGenerator() : rng_(static_cast<unsigned>(
     std::chrono::steady_clock::now().time_since_epoch().count())) {}
+// Public interface: callers request a question without managing RNG state themselves.
 Question QuestionGenerator::generate(int difficulty) {
     difficulty = std::max(1, std::min(5, difficulty));
     const int maxN = difficulty * 10;
