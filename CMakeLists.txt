@@ -15,8 +15,9 @@ add_library(gamehub_core
   src/poker/Deck.cpp
   src/poker/HandEvaluator.cpp
   src/poker/PokerBot.cpp
-  src/local/LocalGames.cpp
-  src/local/MathArena.cpp
+  src/Poker.cpp
+  src/ui/UI.cpp
+  src/Matiks.cpp
 )
 target_include_directories(gamehub_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(WIN32)
