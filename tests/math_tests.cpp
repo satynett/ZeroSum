@@ -1,3 +1,4 @@
+// Encapsulation in tests: test the public QuestionGenerator::generate() behavior without accessing the generator's internal random engine.
 #include "math/QuestionGenerator.h"
 #include <cassert>
 
