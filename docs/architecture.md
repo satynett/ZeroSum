@@ -1,6 +1,6 @@
 # Architecture
 
-The project is a local terminal game hub. All gameplay runs in the same process; no server, client, room code, or remote connection is needed.
+The project is a local terminal game hub. Matiks and Texas Hold'em run in the same process.
 
 ## Main files
 
