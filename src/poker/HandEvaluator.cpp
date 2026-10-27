@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <map>
 #include <stdexcept>
+
+using namespace std;
 namespace {
 int straightHigh(std::vector<int> ranks) {
     std::sort(ranks.begin(),ranks.end()); ranks.erase(std::unique(ranks.begin(),ranks.end()),ranks.end());
