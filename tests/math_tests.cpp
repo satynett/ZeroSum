@@ -1,6 +1,8 @@
 #include "math/QuestionGenerator.h"
 #include <cassert>
 
+
+using namespace std;
 int main() {
     QuestionGenerator generator;
 
