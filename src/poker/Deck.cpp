@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
+
+using namespace std;
 Deck::Deck():rng_(static_cast<unsigned>(std::chrono::steady_clock::now().time_since_epoch().count())) {
     for(int s=0;s<4;++s) for(int r=2;r<=14;++r) cards_.push_back({static_cast<Suit>(s),r});
 }
