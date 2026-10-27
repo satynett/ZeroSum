@@ -16,6 +16,8 @@
 #include <sys/select.h>
 #include <unistd.h>
 
+
+using namespace std;
 namespace {
 std::mt19937& randomEngine() {
     static std::mt19937 rng(static_cast<unsigned>(std::chrono::steady_clock::now().time_since_epoch().count()));
