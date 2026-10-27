@@ -1,3 +1,4 @@
+// Design note: this file separates user interaction and terminal rendering from game rules. It is a procedural UI layer rather than an example of inheritance or runtime polymorphism.
 // UI.cpp: shared menus, input prompts, and terminal game screens.
 #include "UI.h"
 #include <algorithm>
@@ -157,6 +158,7 @@ void renderPokerTable(int handNumber, const std::string& opponentMove,
 }
 
 // Keep the main menu separate from the rules of either game.
+// The menu dispatches to game entry points; each game remains in its own implementation file.
 void runGameHubUI() {
     for (;;) {
         std::cout << "\n=== C++17 Terminal Game Hub ===\n"
