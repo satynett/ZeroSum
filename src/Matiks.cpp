@@ -1,4 +1,7 @@
+// OOP note: QuestionGenerator is used as an object through its public generate() method; its random engine is encapsulated inside the class. The match loop here is procedural, not an inheritance/polymorphism example.
+// Matiks.cpp: questions, difficulty, scoring, and MathBot turns.
 #include "math/QuestionGenerator.h"
+#include "ui/UI.h"
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -11,6 +14,9 @@
 #include <sys/select.h>
 #include <unistd.h>
 
+// Helper functions used by Matiks to generate bot answers and measure time.
+
+using namespace std;
 namespace {
 using Clock = std::chrono::steady_clock;
 
@@ -20,54 +26,9 @@ std::mt19937& rng() {
     return engine;
 }
 
-int readChoice(const std::string& prompt, int low, int high) {
-    for (;;) {
-        std::cout << prompt;
-        std::string line;
-        if (!std::getline(std::cin, line)) return low;
-        std::istringstream input(line);
-        int value; char extra;
-        if (input >> value && !(input >> extra) && value >= low && value <= high)
-            return value;
-        std::cout << "Enter a number from " << low << " to " << high << ".\n";
-    }
-}
 
-bool readAnswerTimed(int seconds, int& answer, double& elapsed) {
-    const auto started = Clock::now();
-    const auto deadline = started + std::chrono::seconds(seconds);
-    std::string line;
-    for (;;) {
-        const auto now = Clock::now();
-        if (now >= deadline) {
-            elapsed = std::chrono::duration<double>(now - started).count();
-            std::cout << "\nTime's up!\n";
-            return false;
-        }
-        const auto remaining = std::chrono::duration_cast<std::chrono::seconds>(
-            deadline - now);
-        timeval wait{static_cast<long>(std::min<std::int64_t>(1, remaining.count())), 0};
-        fd_set inputSet;
-        FD_ZERO(&inputSet);
-        FD_SET(STDIN_FILENO, &inputSet);
-        const int ready = select(STDIN_FILENO + 1, &inputSet, nullptr, nullptr, &wait);
-        if (ready > 0) {
-            if (!std::getline(std::cin, line)) {
-                elapsed = std::chrono::duration<double>(Clock::now() - started).count();
-                return false;
-            }
-            elapsed = std::chrono::duration<double>(Clock::now() - started).count();
-            if (line == "q" || line == "Q") return false;
-            std::istringstream parsed(line);
-            char extra;
-            if (parsed >> answer && !(parsed >> extra)) return true;
-            std::cout << "Enter a whole number, or q to quit: ";
-        } else if (ready < 0) {
-            elapsed = std::chrono::duration<double>(Clock::now() - started).count();
-            return false;
-        }
-    }
-}
+
+
 
 int botAnswer(const Question& q, int accuracy) {
     std::uniform_int_distribution<int> roll(1, 100);
@@ -76,43 +37,29 @@ int botAnswer(const Question& q, int accuracy) {
     return q.answer + (roll(rng()) % 2 ? mistake(rng()) : -mistake(rng()));
 }
 
-void printHeader(int mode, int difficulty, int human, int bot, int lives,
-                 int streak, int round, Clock::time_point blitzEnd) {
-    std::cout << "\n============================================\n"
-              << "              M A T H I K S                 \n"
-              << "============================================\n";
-    const char* modes[] = {"", "SPRINT", "BLITZ", "SURVIVAL"};
-    std::cout << modes[mode] << "  | Round " << round
-              << "  | Difficulty " << difficulty << "\n"
-              << "You " << human << "  :  " << bot << " MathBot";
-    if (mode == 3) std::cout << "  | Lives " << lives << "/3";
-    if (mode == 3) std::cout << "  | Streak " << streak;
-    if (mode == 2) {
-        const auto left = std::chrono::duration_cast<std::chrono::seconds>(
-            blitzEnd - Clock::now()).count();
-        std::cout << "  | Time left " << std::max<std::int64_t>(0, left) << "s";
-    }
-    std::cout << "\n--------------------------------------------\n";
-}
+
 }
 
+// Run the full Matiks match from the mode menu to the final score.
 void runMathArenaLocal() {
     std::cout << "\n          M A T H I K S\n"
               << "      Quick maths. Beat the bot.\n\n"
               << "1. Sprint   - first to 10 points, 8 seconds per question\n"
               << "2. Blitz    - score as much as you can in 2 minutes\n"
               << "3. Survival - 3 lives, difficulty rises every 3 correct answers\n";
-    const int mode = readChoice("Choose mode (1-3): ", 1, 3);
+    const int mode = readMenuChoice("Choose mode (1-3): ", 1, 3);
     std::cout << "\nBot difficulty:\n1. Easy (60% accuracy)\n"
               << "2. Medium (80% accuracy)\n3. Hard (95% accuracy)\n";
-    const int botLevel = readChoice("Choose bot (1-3): ", 1, 3);
+    const int botLevel = readMenuChoice("Choose bot (1-3): ", 1, 3);
     const int accuracy = botLevel == 1 ? 60 : botLevel == 2 ? 80 : 95;
 
+    // Object creation: use the generator's public interface to get each question.
     QuestionGenerator generator;
     int humanScore = 0, botScore = 0, lives = 3, streak = 0, difficulty = 1, round = 0;
     const auto blitzEnd = Clock::now() + std::chrono::minutes(2);
     bool quit = false;
 
+    // Each loop is one question and one chance for the bot to score.
     while (!quit) {
         if (mode == 1 && (humanScore >= 10 || botScore >= 10)) break;
         if (mode == 2 && Clock::now() >= blitzEnd) break;
@@ -121,14 +68,14 @@ void runMathArenaLocal() {
         ++round;
         if (mode == 2) difficulty = std::min(5, 1 + humanScore / 4);
         Question q = generator.generate(difficulty);
-        printHeader(mode, difficulty, humanScore, botScore, lives, streak, round, blitzEnd);
+        printMatiksHeader(mode, difficulty, humanScore, botScore, lives, streak, round, blitzEnd);
         std::cout << "\n  " << q.text << "\n";
         if (mode == 1 || mode == 3) std::cout << "  You have 8 seconds.\n";
         std::cout << "  Answer (or q to quit): " << std::flush;
 
         int answer = 0;
         double elapsed = 0.0;
-        const bool gotAnswer = readAnswerTimed(mode == 2 ? 8 : 8, answer, elapsed);
+        const bool gotAnswer = readMathAnswerTimed(mode == 2 ? 8 : 8, answer, elapsed);
         if (!gotAnswer) {
             if (!std::cin || elapsed > 8.0) {
                 if (mode == 3 && elapsed > 8.0) {

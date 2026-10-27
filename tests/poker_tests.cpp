@@ -1,6 +1,9 @@
+// Abstraction in tests: provide Card values to HandEvaluator and check returned HandRank ordering without depending on its internal algorithm.
 #include "poker/HandEvaluator.h"
 #include <cassert>
 #include <vector>
+
+using namespace std;
 using C=Card;
 static std::vector<C> hand(std::initializer_list<C> x){return std::vector<C>(x);}
 int main(){

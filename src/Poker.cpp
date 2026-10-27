@@ -1,5 +1,7 @@
-#include "LocalGames.h"
-#include "math/QuestionGenerator.h"
+// OOP note: Deck and HandEvaluator provide reusable class interfaces for card dealing and hand ranking. The game coordinates these objects/operations; this file does not use an inheritance hierarchy or runtime polymorphism.
+// Poker.cpp: Texas Hold'em dealing, betting, showdown, and bot decisions.
+#include "ui/UI.h"
+
 #include "poker/Deck.h"
 #include "poker/HandEvaluator.h"
 #include <algorithm>
@@ -15,58 +17,18 @@
 #include <sys/select.h>
 #include <unistd.h>
 
+
+using namespace std;
 namespace {
 std::mt19937& randomEngine() {
     static std::mt19937 rng(static_cast<unsigned>(std::chrono::steady_clock::now().time_since_epoch().count()));
     return rng;
 }
-int readInt(const std::string& prompt, int low, int high) {
-    for (;;) {
-        std::cout << prompt;
-        std::string line;
-        if (!std::getline(std::cin, line)) return low;
-        std::istringstream in(line);
-        int n; char extra;
-        if (in >> n && !(in >> extra) && n >= low && n <= high) return n;
-        std::cout << "Enter a number from " << low << " to " << high << ".\n";
-    }
-}
 
-int readPokerChoiceTimed(int low, int high, int seconds) {
-    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
-    std::string line;
-    for (;;) {
-        if (std::chrono::steady_clock::now() >= deadline) {
-            std::cout << "\nTime expired. Checking/calling.\n";
-            return std::min(2, high);
-        }
-        fd_set input;
-        FD_ZERO(&input);
-        FD_SET(STDIN_FILENO, &input);
-        timeval wait{1, 0};
-        const int ready = select(STDIN_FILENO + 1, &input, nullptr, nullptr, &wait);
-        if (ready > 0) {
-            if (!std::getline(std::cin, line)) return std::min(2, high);
-            std::istringstream in(line);
-            int choice; char extra;
-            if (in >> choice && !(in >> extra) && choice >= low && choice <= high) return choice;
-            std::cout << "Choose " << low << "-" << high << ".\n";
-        } else if (ready < 0) {
-            return std::min(2, high);
-        }
-    }
-}
-std::string shortCard(Card c) {
-    static const char* ranks[]={"?","?","2","3","4","5","6","7","8","9","10","J","Q","K","A"};
-    static const char* suits[]={"♣","♦","♥","♠"};
-    const std::string rank = (c.rank >= 2 && c.rank <= 14) ? ranks[c.rank] : "?";
-    const std::string suit = suits[static_cast<int>(c.suit)];
-    const bool red = c.suit == Suit::Diamonds || c.suit == Suit::Hearts;
-    return std::string(red ? "\033[31m" : "\033[37m") + "[ " + rank + " " + suit + " ]\033[0m";
-}
-void showCards(const std::vector<Card>& cards) {
-    for (auto c:cards) std::cout << shortCard(c) << ' ';
-}
+
+
+
+
 
 double estimateEquity(const std::vector<Card>& hole, const std::vector<Card>& board, int trials = 250) {
     if (board.size() == 5) {
@@ -123,53 +85,17 @@ int preflopTier(const std::vector<Card>& hole) {
     return 4;
 }
 
-void renderPokerTable(int handNumber, const std::string& opponentMove,
-                      const std::vector<Card>& community, const std::vector<Card>& humanHole,
-                      int pot, int humanStack, int botStack, int toCall) {
-    std::cout << "\033[2J\033[H";
-    std::cout << "\033[1;32m";
-    std::cout << "╭────────────────────────────────────────────────────╮\n"
-              << "│                 ♠  TEXAS HOLD'EM  ♥                │\n"
-              << "╰────────────────────────────────────────────────────╯\033[0m\n";
-    std::cout << "HAND " << handNumber << "                         🤖 PokerBot: " << opponentMove << "\n\n";
-    std::cout << "                 OPPONENT  ·  $" << botStack << "\n";
-    std::cout << "                 [ 🂠 ] [ 🂠 ]\n\n";
-    std::cout << "          ";
-    if (community.empty()) std::cout << "[  ·  ] [  ·  ] [  ·  ] [  ·  ] [  ·  ]";
-    else {
-        showCards(community);
-        for (std::size_t i=community.size(); i<5; ++i) std::cout << "[  ·  ] ";
-    }
-    std::cout << "\n\n";
-    std::cout << "                    ┌──────────┐\n"
-              << "                    │  POT $" << pot;
-    if (pot < 100) std::cout << "   ";
-    else if (pot < 1000) std::cout << "  ";
-    else std::cout << " ";
-    std::cout << "│\n                    └──────────┘\n\n";
-    std::cout << "                      YOU  ·  $" << humanStack << "\n";
-    std::cout << "                 ";
-    showCards(humanHole);
-    std::cout << "\n\n";
-    std::cout << "\033[1;33m";
-    std::cout << "  1  FOLD       2  " << (toCall == 0 ? "CHECK" : "CALL $" + std::to_string(std::min(toCall,humanStack))) << "\n";
-    std::cout << "\033[0m";
-}
-int botMathAnswer(const Question& q, int probability) {
-    std::uniform_int_distribution<int> roll(1,100);
-    if (roll(randomEngine()) <= probability) return q.answer;
-    return q.answer + (roll(randomEngine())%2 ? 1 : -1);
-}
+
+
 }
 
-void runMathArenaLocal();
-void runMathLocal() { runMathArenaLocal(); }
 void runPokerLocal() {
     std::cout << "\nStarting Texas Hold'em...\n";
     int humanStack=1000, botStack=1000;
     int handNumber=0;
     while(humanStack>0 && botStack>0) {
         ++handNumber;
+        // Deck encapsulates the shuffled card list and its deal position.
         Deck deck; deck.shuffle();
         std::vector<Card> humanHole{deck.deal(),deck.deal()};
         std::vector<Card> botHole{deck.deal(),deck.deal()};
@@ -218,7 +144,8 @@ void runPokerLocal() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(thinkingTime(randomEngine())));
                 const int currentTarget=std::max(humanBet,botBet);
                 const int toCall=std::max(0,currentTarget-botBet);
-                const double equity = community.empty()
+                // HandEvaluator abstracts the hand-ranking logic used in equity estimation.
+            const double equity = community.empty()
                     ? (preflopTier(botHole)==1 ? 0.72 : preflopTier(botHole)==2 ? 0.62 : preflopTier(botHole)==3 ? 0.50 : 0.38)
                     : estimateEquity(botHole, community, 220);
                 const double potOdds = toCall == 0 ? 0.0 :

@@ -1,7 +1,10 @@
+// Abstraction/encapsulation: the hand-ranking algorithm is kept behind HandEvaluator::evaluate(), so game code can consume HandRank without reproducing poker rules. No inheritance is used here.
 #include "HandEvaluator.h"
 #include <algorithm>
 #include <map>
 #include <stdexcept>
+
+using namespace std;
 namespace {
 int straightHigh(std::vector<int> ranks) {
     std::sort(ranks.begin(),ranks.end()); ranks.erase(std::unique(ranks.begin(),ranks.end()),ranks.end());
@@ -11,6 +14,7 @@ int straightHigh(std::vector<int> ranks) {
     return 0;
 }
 }
+// One public evaluation operation returns a comparable result object (HandRank).
 HandRank HandEvaluator::evaluate(const std::vector<Card>& cards) {
     if(cards.size()!=7) throw std::invalid_argument("HandEvaluator expects exactly 7 cards");
     std::map<int,int,std::greater<int>> counts; std::map<Suit,std::vector<int>> suits; std::vector<int> ranks;
