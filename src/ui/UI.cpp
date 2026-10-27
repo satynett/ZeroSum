@@ -9,6 +9,8 @@
 #include <sys/select.h>
 #include <unistd.h>
 
+
+using namespace std;
 using Clock = std::chrono::steady_clock;
 
 // These functions start the actual game logic.
